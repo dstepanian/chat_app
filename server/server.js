@@ -31,12 +31,14 @@ validateEnv();
 const corsOptions = {
   origin: [
     'http://localhost:5173', // Vite default port
-    'https://chat-nnnlyfnza-dstepanians-projects.vercel.app', // Your Vercel domain
+    'https://chat-nnnlyfnza-dstepanians-projects.vercel.app', // Your previous Vercel domain
+    'https://chat-app-steel-chi.vercel.app', // Your new Vercel domain
     'https://chatapp-production-1b1f.up.railway.app' // Your Railway domain
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
 };
 
 // Middleware
