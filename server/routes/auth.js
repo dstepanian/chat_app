@@ -2,11 +2,17 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 // Register new user
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
+
+    // Validate input
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
@@ -19,6 +25,11 @@ router.post('/register', async (req, res) => {
     await user.save();
 
     // Generate JWT token
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not set');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
+
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: '24h'
     });
@@ -32,7 +43,11 @@ router.post('/register', async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Registration error:', error);
+    res.status(500).json({ 
+      message: 'Server error during registration',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -40,6 +55,11 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
     // Find user by email
     const user = await User.findOne({ email });
@@ -54,6 +74,11 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate JWT token
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not set');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
+
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: '24h'
     });
@@ -67,7 +92,11 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      message: 'Server error during login',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
