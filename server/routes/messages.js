@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Message = require('../models/Message');
-const auth = require('../middleware/auth');
+const { auth } = require('../middleware/auth');
 
 // Get messages for a specific room
 router.get('/:room', auth, async (req, res) => {
@@ -31,4 +31,4 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = { router }; 

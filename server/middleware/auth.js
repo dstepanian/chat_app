@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
+const { getEnv, isDevelopment } = require('../config/env');
 
-module.exports = (req, res, next) => {
+const auth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
@@ -8,10 +9,20 @@ module.exports = (req, res, next) => {
       return res.status(401).json({ message: 'No token, authorization denied' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.userId;
+    const decoded = jwt.verify(token, getEnv('JWT_SECRET'));
+    req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Token is not valid' });
+    console.error('Auth middleware error:', {
+      message: error.message,
+      name: error.name
+    });
+    
+    res.status(401).json({ 
+      message: 'Token is not valid',
+      error: isDevelopment() ? error.message : undefined
+    });
   }
-}; 
+};
+
+module.exports = { auth }; 
