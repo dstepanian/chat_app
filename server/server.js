@@ -27,12 +27,20 @@ const app = express();
 // Validate environment variables
 validateEnv();
 
-// Middleware
-app.use(cors({
-  origin: '*', // Allow all origins in production
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+// CORS configuration
+const corsOptions = {
+  origin: [
+    'http://localhost:5173', // Vite default port
+    'https://chat-nnnlyfnza-dstepanians-projects.vercel.app', // Your Vercel domain
+    'https://chatapp-production-1b1f.up.railway.app' // Your Railway domain
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-}));
+};
+
+// Middleware
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Routes
@@ -63,12 +71,9 @@ const PORT = process.env.PORT || 5000;
 // Create HTTP server
 const server = http.createServer(app);
 
-// Initialize Socket.IO
+// Initialize Socket.IO with CORS
 const io = socketIO(server, {
-  cors: {
-    origin: '*', // Allow all origins in production
-    methods: ['GET', 'POST']
-  }
+  cors: corsOptions
 });
 
 // Socket.IO connection handling
