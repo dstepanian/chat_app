@@ -4,7 +4,7 @@ const cors = require('cors');
 const socketIO = require('socket.io');
 const dotenv = require('dotenv');
 const http = require('http');
-const { validateEnv } = require('./config/env');
+const { validateEnv, isDevelopment } = require('./config/env');
 const { connectDB } = require('./config/database');
 const { errorHandler } = require('./middleware/errorHandler');
 const { router: authRouter } = require('./routes/auth');
@@ -29,21 +29,41 @@ validateEnv();
 
 // CORS configuration
 const corsOptions = {
-  origin: [
-    'http://localhost:5173', // Vite default port
-    'https://chat-nnnlyfnza-dstepanians-projects.vercel.app', // Your previous Vercel domain
-    'https://chat-app-steel-chi.vercel.app', // Your new Vercel domain
-    'https://chatapp-production-1b1f.up.railway.app' // Your Railway domain
-  ],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'https://chat-nnnlyfnza-dstepanians-projects.vercel.app',
+      'https://chat-app-steel-chi.vercel.app',
+      'https://chatapp-production-1b1f.up.railway.app'
+    ];
+    
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || isDevelopment()) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
   credentials: true,
-  optionsSuccessStatus: 200 // Some legacy browsers choke on 204
+  maxAge: 86400, // 24 hours
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 };
 
-// Middleware
+// Apply CORS middleware before other middleware
 app.use(cors(corsOptions));
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
+
+// Other middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRouter);
@@ -75,7 +95,11 @@ const server = http.createServer(app);
 
 // Initialize Socket.IO with CORS
 const io = socketIO(server, {
-  cors: corsOptions
+  cors: {
+    origin: corsOptions.origin,
+    methods: corsOptions.methods,
+    credentials: corsOptions.credentials
+  }
 });
 
 // Socket.IO connection handling
@@ -118,6 +142,7 @@ const startServer = async () => {
       console.log('Environment:', process.env.NODE_ENV || 'development');
       console.log('MongoDB URI:', process.env.MONGODB_URI ? 'Set' : 'Not set');
       console.log('JWT Secret:', process.env.JWT_SECRET ? 'Set' : 'Not set');
+      console.log('CORS enabled for origins:', corsOptions.origin);
     });
   } catch (error) {
     console.error('Failed to start server:', {
