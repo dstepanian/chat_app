@@ -14,6 +14,7 @@ import {
   Avatar,
 } from '@chakra-ui/react'
 import io from 'socket.io-client'
+import { API_ENDPOINTS } from '../config/api'
 
 function Chat() {
   const [message, setMessage] = useState('')
@@ -33,7 +34,7 @@ function Chat() {
     }
 
     // Connect to Socket.IO server
-    const newSocket = io(import.meta.env.VITE_API_URL)
+    const newSocket = io(API_ENDPOINTS.MESSAGES.replace('/api/messages', ''))
     setSocket(newSocket)
 
     // Join the general room

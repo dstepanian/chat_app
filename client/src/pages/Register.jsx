@@ -14,6 +14,7 @@ import {
   Heading
 } from '@chakra-ui/react'
 import axios from 'axios'
+import { API_ENDPOINTS } from '../config/api'
 
 function Register() {
   const [username, setUsername] = useState('')
@@ -28,7 +29,7 @@ function Register() {
     setIsLoading(true)
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+      const response = await axios.post(API_ENDPOINTS.AUTH.REGISTER, {
         username,
         email,
         password
